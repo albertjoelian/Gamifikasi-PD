@@ -1,0 +1,961 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Gamifikasi Tim</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#0d0d14;--bg2:#13131f;--bg3:#1a1a2e;
+  --border:rgba(255,255,255,0.07);--border2:rgba(255,255,255,0.14);
+  --text:#f0f0f8;--text2:#8888aa;--text3:#55557a;
+  --accent:#7c6bff;--accent2:#a855f7;
+  --gold:#f59e0b;--teal:#14b8a6;--coral:#f87171;--green:#4ade80;
+  --fh:'Syne',sans-serif;--fb:'DM Sans',sans-serif;
+  --r:14px;--rs:8px;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--text);font-family:var(--fb);min-height:100vh;overflow-x:hidden}
+body::before{content:'';position:fixed;inset:0;background-image:linear-gradient(rgba(124,107,255,0.025) 1px,transparent 1px),linear-gradient(90deg,rgba(124,107,255,0.025) 1px,transparent 1px);background-size:40px 40px;pointer-events:none;z-index:0}
+
+/* ── PAGE SYSTEM ── */
+.page{display:none;position:relative;z-index:1}
+.page.active{display:block}
+
+/* ── PUBLIC APP ── */
+.app{max-width:900px;margin:0 auto;padding:2rem 1.5rem 4rem}
+.header{text-align:center;margin-bottom:2.5rem;padding:2rem 0 1rem}
+.header-badge{display:inline-block;font-family:var(--fh);font-size:11px;font-weight:600;letter-spacing:3px;text-transform:uppercase;color:var(--accent);background:rgba(124,107,255,0.1);border:1px solid rgba(124,107,255,0.2);padding:4px 14px;border-radius:20px;margin-bottom:14px}
+.header h1{font-family:var(--fh);font-size:clamp(26px,5vw,44px);font-weight:800;line-height:1.1;background:linear-gradient(135deg,#fff 0%,var(--accent) 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;margin-bottom:8px}
+.header p{color:var(--text2);font-size:14px}
+.admin-link{position:fixed;bottom:1.5rem;right:1.5rem;z-index:100;background:rgba(124,107,255,0.12);border:1px solid rgba(124,107,255,0.2);color:var(--accent);padding:8px 14px;border-radius:20px;font-size:12px;font-weight:600;cursor:pointer;transition:all .2s}
+.admin-link:hover{background:rgba(124,107,255,0.2)}
+
+/* ── STATS ── */
+.stats-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:2rem}
+.stat-card{background:var(--bg2);border:1px solid var(--border);border-radius:var(--r);padding:1.1rem 1rem;text-align:center;position:relative;overflow:hidden;transition:border-color .2s}
+.stat-card::before{content:'';position:absolute;top:0;left:0;right:0;height:2px}
+.stat-card:nth-child(1)::before{background:var(--accent)}
+.stat-card:nth-child(2)::before{background:var(--gold)}
+.stat-card:nth-child(3)::before{background:var(--teal)}
+.stat-card:nth-child(4)::before{background:var(--coral)}
+.stat-card:hover{border-color:var(--border2)}
+.stat-num{font-family:var(--fh);font-size:28px;font-weight:800;line-height:1;margin-bottom:4px}
+.stat-card:nth-child(1) .stat-num{color:var(--accent)}
+.stat-card:nth-child(2) .stat-num{color:var(--gold)}
+.stat-card:nth-child(3) .stat-num{color:var(--teal)}
+.stat-card:nth-child(4) .stat-num{color:var(--coral)}
+.stat-label{font-size:11px;color:var(--text2);text-transform:uppercase;letter-spacing:1px}
+
+/* ── TABS ── */
+.tabs{display:flex;gap:4px;background:var(--bg2);border:1px solid var(--border);border-radius:var(--r);padding:5px;margin-bottom:1.5rem}
+.tab{flex:1;padding:8px 8px;border:none;background:transparent;color:var(--text2);font-family:var(--fh);font-size:12px;font-weight:600;cursor:pointer;border-radius:10px;transition:all .2s;white-space:nowrap}
+.tab:hover{color:var(--text);background:rgba(255,255,255,0.04)}
+.tab.active{background:var(--accent);color:#fff}
+.section{display:none}
+.section.active{display:block;animation:fadeIn .25s ease}
+@keyframes fadeIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
+
+/* ── CARD ── */
+.card{background:var(--bg2);border:1px solid var(--border);border-radius:var(--r);overflow:hidden;margin-bottom:1rem}
+.card-header{padding:1rem 1.25rem;border-bottom:1px solid var(--border);font-family:var(--fh);font-size:12px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:1.5px}
+
+/* ── LEADERBOARD ── */
+.lb-item{display:flex;align-items:center;gap:14px;padding:14px 1.25rem;border-bottom:1px solid var(--border);transition:background .15s}
+.lb-item:last-child{border-bottom:none}
+.lb-item:hover{background:rgba(255,255,255,0.02)}
+.lb-rank{font-family:var(--fh);font-size:18px;width:34px;text-align:center;flex-shrink:0}
+.lb-av{width:40px;height:40px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:var(--fh);font-size:13px;font-weight:700;flex-shrink:0}
+.lb-info{flex:1;min-width:0}
+.lb-name{font-family:var(--fh);font-size:14px;font-weight:700;margin-bottom:2px}
+.lb-role{font-size:11px;color:var(--text2)}
+.lb-xp{font-family:var(--fh);font-size:18px;font-weight:800;color:var(--accent)}
+.lb-lv{font-size:11px;color:var(--text2);margin-top:2px}
+.lv-tag{display:inline-flex;align-items:center;gap:4px;font-size:11px;font-weight:600;padding:2px 8px;border-radius:20px}
+.lv-bronze{background:rgba(205,124,58,.15);color:#cd7c3a}
+.lv-silver{background:rgba(148,163,184,.15);color:#94a3b8}
+.lv-gold{background:rgba(245,158,11,.15);color:var(--gold)}
+.lv-platinum{background:rgba(124,107,255,.15);color:#a89eff}
+
+/* ── PROGRESS ── */
+.prog-label{display:flex;justify-content:space-between;font-size:11px;color:var(--text2);margin-bottom:5px}
+.prog-bg{height:5px;background:rgba(255,255,255,0.06);border-radius:99px;overflow:hidden;margin-bottom:2px}
+.prog-fill{height:100%;border-radius:99px;background:linear-gradient(90deg,var(--accent),var(--accent2));transition:width .8s cubic-bezier(.4,0,.2,1)}
+
+/* ── AVATAR COLORS ── */
+.av-0{background:rgba(124,107,255,.2);color:#a89eff}
+.av-1{background:rgba(20,184,166,.2);color:#5eead4}
+.av-2{background:rgba(248,113,113,.2);color:#fca5a5}
+.av-3{background:rgba(245,158,11,.2);color:#fcd34d}
+.av-4{background:rgba(168,85,247,.2);color:#d8b4fe}
+.av-5{background:rgba(74,222,128,.2);color:#86efac}
+.av-6{background:rgba(251,146,60,.2);color:#fdba74}
+
+/* ── QUEST ── */
+.quest-filters,.badge-filters{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:1rem}
+.filter-btn{font-size:12px;font-weight:600;padding:5px 14px;border-radius:20px;border:1px solid var(--border2);background:transparent;color:var(--text2);cursor:pointer;transition:all .15s}
+.filter-btn:hover{color:var(--text)}
+.filter-btn.active{background:var(--accent);border-color:var(--accent);color:#fff}
+.quest-grid{display:flex;flex-direction:column;gap:10px}
+.quest-item{background:var(--bg2);border:1px solid var(--border);border-radius:var(--r);padding:1rem 1.2rem;display:flex;gap:14px;align-items:flex-start;transition:all .2s;cursor:pointer}
+.quest-item:hover{border-color:var(--border2);transform:translateX(3px)}
+.quest-item.done{opacity:.45}
+.q-icon{width:38px;height:38px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:19px;flex-shrink:0}
+.qi-work{background:rgba(245,158,11,.15)}
+.qi-skill{background:rgba(20,184,166,.15)}
+.qi-collab{background:rgba(124,107,255,.15)}
+.q-name{font-family:var(--fh);font-size:14px;font-weight:700;margin-bottom:3px}
+.q-desc{font-size:12px;color:var(--text2);margin-bottom:8px;line-height:1.5}
+.pills{display:flex;flex-wrap:wrap;gap:6px}
+.pill{font-size:11px;font-weight:600;padding:3px 10px;border-radius:20px}
+.p-xp{background:rgba(124,107,255,.15);color:#a89eff}
+.p-work{background:rgba(245,158,11,.15);color:#fcd34d}
+.p-skill{background:rgba(20,184,166,.15);color:#5eead4}
+.p-collab{background:rgba(168,85,247,.15);color:#d8b4fe}
+.p-easy{background:rgba(74,222,128,.15);color:#86efac}
+.p-med{background:rgba(245,158,11,.15);color:#fcd34d}
+.p-hard{background:rgba(248,113,113,.15);color:#fca5a5}
+.q-check{width:24px;height:24px;border-radius:50%;border:2px solid var(--border2);display:flex;align-items:center;justify-content:center;flex-shrink:0;cursor:pointer;transition:all .2s;font-size:12px;margin-top:2px}
+.q-check.checked{background:var(--teal);border-color:var(--teal)}
+
+/* ── TEAM ── */
+.team-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:12px}
+.team-card{background:var(--bg2);border:1px solid var(--border);border-radius:var(--r);padding:1.2rem;cursor:pointer;transition:all .2s}
+.team-card:hover{border-color:var(--accent);transform:translateY(-2px)}
+.team-card.sel{border-color:var(--accent);background:var(--bg3)}
+.tc-top{display:flex;align-items:center;gap:10px;margin-bottom:10px}
+.tc-av{width:42px;height:42px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:var(--fh);font-size:14px;font-weight:700}
+.tc-name{font-family:var(--fh);font-size:13px;font-weight:700;margin-bottom:2px}
+.tc-role{font-size:11px;color:var(--text2)}
+.tc-xp{font-family:var(--fh);font-size:20px;font-weight:800;color:var(--accent);margin-bottom:2px}
+.tc-xp-lbl{font-size:11px;color:var(--text2);margin-bottom:8px}
+#member-detail{background:var(--bg2);border:1px solid var(--border);border-radius:var(--r);padding:1.5rem;margin-top:12px;display:none;animation:fadeIn .2s ease}
+.det-top{display:flex;align-items:center;gap:14px;margin-bottom:1rem}
+.det-av{width:52px;height:52px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:var(--fh);font-size:17px;font-weight:700}
+.det-name{font-family:var(--fh);font-size:18px;font-weight:800}
+.det-role{font-size:12px;color:var(--text2);margin:3px 0}
+.det-stats{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-top:12px}
+.det-stat{background:var(--bg3);border-radius:var(--rs);padding:12px;text-align:center}
+.det-snum{font-family:var(--fh);font-size:20px;font-weight:800}
+.det-slbl{font-size:11px;color:var(--text2);margin-top:2px}
+.skills-wrap{display:flex;flex-wrap:wrap;gap:6px;margin-top:12px}
+.skill-tag{font-size:12px;padding:4px 12px;border-radius:20px;background:rgba(124,107,255,.1);color:#a89eff;border:1px solid rgba(124,107,255,.2)}
+
+/* ── BADGE ── */
+.badge-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(165px,1fr));gap:10px}
+.badge-card{background:var(--bg2);border:1px solid var(--border);border-radius:var(--r);padding:1.2rem 1rem;text-align:center;transition:all .2s}
+.badge-card:hover{border-color:var(--border2);transform:translateY(-2px)}
+.badge-emoji{font-size:30px;margin-bottom:8px;display:block}
+.badge-name{font-family:var(--fh);font-size:13px;font-weight:700;margin-bottom:4px}
+.badge-desc{font-size:11px;color:var(--text2);line-height:1.5;margin-bottom:8px}
+.br-common{font-size:10px;font-weight:700;padding:2px 8px;border-radius:20px;display:inline-block;background:rgba(148,163,184,.15);color:#94a3b8}
+.br-rare{font-size:10px;font-weight:700;padding:2px 8px;border-radius:20px;display:inline-block;background:rgba(96,165,250,.15);color:#93c5fd}
+.br-epic{font-size:10px;font-weight:700;padding:2px 8px;border-radius:20px;display:inline-block;background:rgba(124,107,255,.15);color:#a89eff}
+.br-legendary{font-size:10px;font-weight:700;padding:2px 8px;border-radius:20px;display:inline-block;background:rgba(245,158,11,.15);color:var(--gold)}
+.badge-xp{font-size:12px;font-weight:600;color:var(--accent);margin-top:4px}
+
+/* ════════════════════════════════════
+   ADMIN PANEL
+════════════════════════════════════ */
+.admin-page{max-width:960px;margin:0 auto;padding:2rem 1.5rem 4rem;position:relative;z-index:1}
+.admin-topbar{display:flex;align-items:center;justify-content:space-between;margin-bottom:2rem;padding-bottom:1.2rem;border-bottom:1px solid var(--border)}
+.admin-topbar h2{font-family:var(--fh);font-size:22px;font-weight:800;color:var(--text)}
+.btn{padding:8px 18px;border-radius:var(--rs);font-size:13px;font-weight:600;cursor:pointer;border:none;transition:all .2s}
+.btn-ghost{background:transparent;border:1px solid var(--border2);color:var(--text2)}
+.btn-ghost:hover{border-color:var(--accent);color:var(--accent)}
+.btn-primary{background:var(--accent);color:#fff}
+.btn-primary:hover{opacity:.85}
+.btn-danger{background:rgba(248,113,113,.12);border:1px solid rgba(248,113,113,.25);color:var(--coral)}
+.btn-danger:hover{background:rgba(248,113,113,.2)}
+.btn-sm{padding:5px 12px;font-size:12px;border-radius:6px}
+.btn-success{background:rgba(74,222,128,.12);border:1px solid rgba(74,222,128,.25);color:var(--green)}
+.btn-success:hover{background:rgba(74,222,128,.2)}
+
+.admin-tabs{display:flex;gap:4px;background:var(--bg2);border:1px solid var(--border);border-radius:var(--r);padding:5px;margin-bottom:1.5rem}
+.admin-tab{flex:1;padding:8px;border:none;background:transparent;color:var(--text2);font-family:var(--fh);font-size:12px;font-weight:600;cursor:pointer;border-radius:10px;transition:all .2s}
+.admin-tab:hover{color:var(--text);background:rgba(255,255,255,0.04)}
+.admin-tab.active{background:var(--accent);color:#fff}
+.admin-section{display:none}
+.admin-section.active{display:block;animation:fadeIn .2s ease}
+
+.admin-card{background:var(--bg2);border:1px solid var(--border);border-radius:var(--r);overflow:hidden;margin-bottom:1.25rem}
+.admin-card-header{padding:.9rem 1.25rem;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between}
+.admin-card-title{font-family:var(--fh);font-size:13px;font-weight:700;color:var(--text)}
+.admin-card-body{padding:1.25rem}
+
+/* Table */
+.data-table{width:100%;border-collapse:collapse;font-size:13px}
+.data-table th{text-align:left;padding:8px 12px;color:var(--text2);font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:1px;border-bottom:1px solid var(--border)}
+.data-table td{padding:10px 12px;border-bottom:1px solid var(--border);vertical-align:middle}
+.data-table tr:last-child td{border-bottom:none}
+.data-table tr:hover td{background:rgba(255,255,255,0.02)}
+
+/* Form inputs */
+.form-group{margin-bottom:1rem}
+.form-label{display:block;font-size:12px;font-weight:600;color:var(--text2);margin-bottom:6px;text-transform:uppercase;letter-spacing:.5px}
+.form-input,.form-select,.form-textarea{width:100%;background:var(--bg3);border:1px solid var(--border2);border-radius:var(--rs);padding:9px 12px;color:var(--text);font-family:var(--fb);font-size:13px;transition:border-color .2s;outline:none}
+.form-input:focus,.form-select:focus,.form-textarea:focus{border-color:var(--accent)}
+.form-select option{background:var(--bg2)}
+.form-textarea{resize:vertical;min-height:70px;line-height:1.5}
+.form-row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.form-row-3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px}
+
+/* Modal overlay */
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.65);z-index:1000;display:none;align-items:center;justify-content:center;padding:1rem}
+.modal-overlay.open{display:flex}
+.modal{background:var(--bg2);border:1px solid var(--border2);border-radius:var(--r);padding:1.5rem;width:100%;max-width:520px;max-height:90vh;overflow-y:auto;animation:fadeIn .2s ease}
+.modal-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:1.25rem}
+.modal-title{font-family:var(--fh);font-size:16px;font-weight:800}
+.modal-close{background:transparent;border:none;color:var(--text2);font-size:20px;cursor:pointer;line-height:1;padding:4px}
+.modal-close:hover{color:var(--text)}
+.modal-footer{display:flex;gap:8px;justify-content:flex-end;margin-top:1.25rem;padding-top:1rem;border-top:1px solid var(--border)}
+
+/* Login */
+.login-wrap{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:1rem;position:relative;z-index:1}
+.login-box{background:var(--bg2);border:1px solid var(--border2);border-radius:var(--r);padding:2rem;width:100%;max-width:380px;text-align:center}
+.login-icon{font-size:36px;margin-bottom:1rem}
+.login-title{font-family:var(--fh);font-size:20px;font-weight:800;margin-bottom:6px}
+.login-sub{font-size:13px;color:var(--text2);margin-bottom:1.5rem}
+.login-err{font-size:13px;color:var(--coral);margin-top:8px;display:none}
+.inline-av{width:32px;height:32px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;font-family:var(--fh);font-size:11px;font-weight:700;margin-right:8px;vertical-align:middle}
+
+/* Toast */
+.toast{position:fixed;bottom:1.5rem;left:50%;transform:translateX(-50%) translateY(80px);background:var(--bg2);border:1px solid var(--border2);border-radius:20px;padding:10px 20px;font-size:13px;color:var(--text);z-index:9999;transition:transform .3s cubic-bezier(.34,1.56,.64,1);white-space:nowrap}
+.toast.show{transform:translateX(-50%) translateY(0)}
+
+@media(max-width:580px){
+  .stats-grid{grid-template-columns:repeat(2,1fr)}
+  .tab{font-size:11px;padding:7px 4px}
+  .form-row,.form-row-3{grid-template-columns:1fr}
+  .det-stats{grid-template-columns:1fr 1fr}
+}
+</style>
+</head>
+<body>
+
+<!-- ══ LOGIN PAGE ══ -->
+<div id="page-login" class="page active">
+  <div class="login-wrap">
+    <div class="login-box">
+      <div class="login-icon">🎮</div>
+      <div class="login-title">Admin Panel</div>
+      <div class="login-sub">Masukkan password untuk mengelola tim</div>
+      <input class="form-input" type="password" id="pwd-input" placeholder="Password admin..." style="text-align:center;margin-bottom:8px" onkeydown="if(event.key==='Enter')doLogin()">
+      <div id="login-err" class="login-err">Password salah, coba lagi</div>
+      <button class="btn btn-primary" style="width:100%;margin-top:12px" onclick="doLogin()">Masuk →</button>
+      <button class="btn btn-ghost" style="width:100%;margin-top:8px" onclick="showPage('public')">← Lihat Halaman Tim</button>
+      <div style="font-size:11px;color:var(--text2);margin-top:1rem">Default password: <code style="color:var(--accent)">admin123</code></div>
+    </div>
+  </div>
+</div>
+
+<!-- ══ PUBLIC PAGE ══ -->
+<div id="page-public" class="page">
+  <div class="app">
+    <div class="header">
+      <div class="header-badge" id="pub-badge">Tim Kamu · 2025</div>
+      <h1 id="pub-title">Sistem Gamifikasi Tim</h1>
+      <p id="pub-desc">Pantau perkembangan, XP, dan pencapaian seluruh anggota tim</p>
+    </div>
+
+    <div class="stats-grid">
+      <div class="stat-card"><div class="stat-num" id="s-members">7</div><div class="stat-label">Anggota</div></div>
+      <div class="stat-card"><div class="stat-num" id="s-xp">0</div><div class="stat-label">Total XP</div></div>
+      <div class="stat-card"><div class="stat-num" id="s-quests">0</div><div class="stat-label">Quest Selesai</div></div>
+      <div class="stat-card"><div class="stat-num" id="s-badges">0</div><div class="stat-label">Badge Diraih</div></div>
+    </div>
+
+    <div class="tabs">
+      <button class="tab active" onclick="switchTab('lb')">🏆 Leaderboard</button>
+      <button class="tab" onclick="switchTab('quest')">📋 Quest</button>
+      <button class="tab" onclick="switchTab('team')">👥 Tim</button>
+      <button class="tab" onclick="switchTab('badge')">🏅 Badge</button>
+    </div>
+
+    <div id="lb" class="section active">
+      <div class="card"><div class="card-header">🥇 Peringkat Tim</div><div id="lb-list"></div></div>
+      <div class="card"><div class="card-header">📈 Progress XP</div><div id="prog-list" style="padding:1rem 1.25rem;display:flex;flex-direction:column;gap:1rem"></div></div>
+    </div>
+
+    <div id="quest" class="section">
+      <div class="quest-filters" id="quest-filters">
+        <button class="filter-btn active" onclick="filterQ('all',this)">Semua</button>
+        <button class="filter-btn" onclick="filterQ('Pekerjaan',this)">💼 Pekerjaan</button>
+        <button class="filter-btn" onclick="filterQ('Kolaborasi',this)">🤝 Kolaborasi</button>
+        <button class="filter-btn" onclick="filterQ('Skill',this)">📚 Skill</button>
+      </div>
+      <div class="quest-grid" id="quest-list"></div>
+    </div>
+
+    <div id="team" class="section">
+      <div class="team-grid" id="team-grid"></div>
+      <div id="member-detail"></div>
+    </div>
+
+    <div id="badge" class="section">
+      <div class="badge-filters">
+        <button class="filter-btn active" onclick="filterB('all',this)">Semua</button>
+        <button class="filter-btn" onclick="filterB('Legendary',this)">⭐ Legendary</button>
+        <button class="filter-btn" onclick="filterB('Epic',this)">🔮 Epic</button>
+        <button class="filter-btn" onclick="filterB('Rare',this)">💎 Rare</button>
+        <button class="filter-btn" onclick="filterB('Common',this)">🔹 Common</button>
+      </div>
+      <div class="badge-grid" id="badge-grid"></div>
+    </div>
+  </div>
+  <button class="admin-link" onclick="showPage('login')">⚙️ Admin</button>
+</div>
+
+<!-- ══ ADMIN PAGE ══ -->
+<div id="page-admin" class="page">
+  <div class="admin-page">
+    <div class="admin-topbar">
+      <div>
+        <h2>⚙️ Admin Panel</h2>
+        <div style="font-size:12px;color:var(--text2);margin-top:3px">Kelola data tim, misi, dan badge</div>
+      </div>
+      <div style="display:flex;gap:8px">
+        <button class="btn btn-ghost btn-sm" onclick="showPage('public')">← Lihat Tim</button>
+        <button class="btn btn-danger btn-sm" onclick="doLogout()">Keluar</button>
+      </div>
+    </div>
+
+    <div class="admin-tabs">
+      <button class="admin-tab active" onclick="switchAdminTab('at-members')">👥 Anggota Tim</button>
+      <button class="admin-tab" onclick="switchAdminTab('at-quests')">📋 Quest</button>
+      <button class="admin-tab" onclick="switchAdminTab('at-badges')">🏅 Badge</button>
+      <button class="admin-tab" onclick="switchAdminTab('at-settings')">⚙️ Pengaturan</button>
+    </div>
+
+    <!-- MEMBERS TAB -->
+    <div id="at-members" class="admin-section active">
+      <div class="admin-card">
+        <div class="admin-card-header">
+          <span class="admin-card-title">Daftar Anggota</span>
+          <button class="btn btn-primary btn-sm" onclick="openModal('member')">+ Tambah Anggota</button>
+        </div>
+        <div class="admin-card-body" style="padding:0">
+          <table class="data-table" id="members-table"></table>
+        </div>
+      </div>
+    </div>
+
+    <!-- QUESTS TAB -->
+    <div id="at-quests" class="admin-section">
+      <div class="admin-card">
+        <div class="admin-card-header">
+          <span class="admin-card-title">Daftar Quest</span>
+          <button class="btn btn-primary btn-sm" onclick="openModal('quest')">+ Tambah Quest</button>
+        </div>
+        <div class="admin-card-body" style="padding:0">
+          <table class="data-table" id="quests-table"></table>
+        </div>
+      </div>
+    </div>
+
+    <!-- BADGES TAB -->
+    <div id="at-badges" class="admin-section">
+      <div class="admin-card">
+        <div class="admin-card-header">
+          <span class="admin-card-title">Daftar Badge</span>
+          <button class="btn btn-primary btn-sm" onclick="openModal('badge')">+ Tambah Badge</button>
+        </div>
+        <div class="admin-card-body" style="padding:0">
+          <table class="data-table" id="badges-table"></table>
+        </div>
+      </div>
+    </div>
+
+    <!-- SETTINGS TAB -->
+    <div id="at-settings" class="admin-section">
+      <div class="admin-card">
+        <div class="admin-card-header"><span class="admin-card-title">Nama & Deskripsi Tim</span></div>
+        <div class="admin-card-body">
+          <div class="form-group">
+            <label class="form-label">Nama Tim</label>
+            <input class="form-input" id="set-teamname" placeholder="Nama tim kamu...">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Tahun / Periode</label>
+            <input class="form-input" id="set-year" placeholder="misal: 2025">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Deskripsi Halaman</label>
+            <textarea class="form-textarea" id="set-desc" placeholder="Deskripsi singkat sistem gamifikasi..."></textarea>
+          </div>
+          <button class="btn btn-primary" onclick="saveSettings()">Simpan Pengaturan</button>
+        </div>
+      </div>
+      <div class="admin-card">
+        <div class="admin-card-header"><span class="admin-card-title">Ganti Password Admin</span></div>
+        <div class="admin-card-body">
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label">Password Baru</label>
+              <input class="form-input" id="new-pwd" type="password" placeholder="Password baru...">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Konfirmasi</label>
+              <input class="form-input" id="confirm-pwd" type="password" placeholder="Ulangi password...">
+            </div>
+          </div>
+          <button class="btn btn-primary" onclick="changePwd()">Ganti Password</button>
+        </div>
+      </div>
+      <div class="admin-card">
+        <div class="admin-card-header"><span class="admin-card-title">Data</span></div>
+        <div class="admin-card-body" style="display:flex;gap:10px;flex-wrap:wrap">
+          <button class="btn btn-ghost" onclick="exportData()">⬇ Export JSON</button>
+          <label class="btn btn-ghost" style="cursor:pointer">⬆ Import JSON <input type="file" accept=".json" style="display:none" onchange="importData(event)"></label>
+          <button class="btn btn-danger" onclick="resetData()">🗑 Reset ke Default</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══ MODALS ══ -->
+<div class="modal-overlay" id="modal-member">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title" id="modal-member-title">Tambah Anggota</div>
+      <button class="modal-close" onclick="closeModal('member')">✕</button>
+    </div>
+    <input type="hidden" id="m-edit-idx" value="-1">
+    <div class="form-row">
+      <div class="form-group"><label class="form-label">Nama Lengkap</label><input class="form-input" id="m-name" placeholder="Nama lengkap..."></div>
+      <div class="form-group"><label class="form-label">Role / Jabatan</label><input class="form-input" id="m-role" placeholder="misal: Backend Dev"></div>
+    </div>
+    <div class="form-group"><label class="form-label">Skills (pisah koma)</label><input class="form-input" id="m-skills" placeholder="misal: React, TypeScript, Node.js"></div>
+    <div class="form-row-3">
+      <div class="form-group"><label class="form-label">Total XP</label><input class="form-input" id="m-xp" type="number" min="0" placeholder="0"></div>
+      <div class="form-group"><label class="form-label">Quest Selesai</label><input class="form-input" id="m-quests" type="number" min="0" placeholder="0"></div>
+      <div class="form-group"><label class="form-label">Badge Diraih</label><input class="form-input" id="m-badges" type="number" min="0" placeholder="0"></div>
+    </div>
+    <div class="form-group"><label class="form-label">Target XP Level Berikutnya</label>
+      <select class="form-select" id="m-target">
+        <option value="1500">Silver (1.500 XP)</option>
+        <option value="2000">Gold (2.000 XP)</option>
+        <option value="2800" selected>Platinum (2.800 XP)</option>
+      </select>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('member')">Batal</button>
+      <button class="btn btn-primary" onclick="saveMember()">Simpan</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="modal-quest">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title" id="modal-quest-title">Tambah Quest</div>
+      <button class="modal-close" onclick="closeModal('quest')">✕</button>
+    </div>
+    <input type="hidden" id="q-edit-idx" value="-1">
+    <div class="form-group"><label class="form-label">Nama Quest</label><input class="form-input" id="q-name" placeholder="Nama misi..."></div>
+    <div class="form-group"><label class="form-label">Deskripsi</label><textarea class="form-textarea" id="q-desc" placeholder="Jelaskan apa yang perlu dilakukan..."></textarea></div>
+    <div class="form-row">
+      <div class="form-group"><label class="form-label">Kategori</label>
+        <select class="form-select" id="q-cat">
+          <option value="Pekerjaan">💼 Pekerjaan</option>
+          <option value="Kolaborasi">🤝 Kolaborasi</option>
+          <option value="Skill">📚 Skill</option>
+        </select>
+      </div>
+      <div class="form-group"><label class="form-label">Tingkat Kesulitan</label>
+        <select class="form-select" id="q-diff">
+          <option value="Mudah">✅ Mudah</option>
+          <option value="Sedang" selected>⚡ Sedang</option>
+          <option value="Sulit">🔥 Sulit</option>
+        </select>
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label class="form-label">XP Reward</label><input class="form-input" id="q-xp" type="number" min="1" placeholder="200"></div>
+      <div class="form-group"><label class="form-label">Icon (emoji)</label><input class="form-input" id="q-icon" placeholder="📋" style="font-size:18px"></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('quest')">Batal</button>
+      <button class="btn btn-primary" onclick="saveQuest()">Simpan</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="modal-badge">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title" id="modal-badge-title">Tambah Badge</div>
+      <button class="modal-close" onclick="closeModal('badge')">✕</button>
+    </div>
+    <input type="hidden" id="b-edit-idx" value="-1">
+    <div class="form-row">
+      <div class="form-group"><label class="form-label">Nama Badge</label><input class="form-input" id="b-name" placeholder="Nama badge..."></div>
+      <div class="form-group"><label class="form-label">Icon (emoji)</label><input class="form-input" id="b-icon" placeholder="⭐" style="font-size:18px"></div>
+    </div>
+    <div class="form-group"><label class="form-label">Deskripsi / Syarat</label><textarea class="form-textarea" id="b-desc" placeholder="Kondisi apa yang harus dipenuhi..."></textarea></div>
+    <div class="form-row">
+      <div class="form-group"><label class="form-label">Kelangkaan</label>
+        <select class="form-select" id="b-rarity">
+          <option value="Common">🔹 Common</option>
+          <option value="Rare" selected>💎 Rare</option>
+          <option value="Epic">🔮 Epic</option>
+          <option value="Legendary">⭐ Legendary</option>
+        </select>
+      </div>
+      <div class="form-group"><label class="form-label">XP Bonus</label><input class="form-input" id="b-xp" type="number" min="0" placeholder="200"></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('badge')">Batal</button>
+      <button class="btn btn-primary" onclick="saveBadge()">Simpan</button>
+    </div>
+  </div>
+</div>
+
+<!-- Toast -->
+<div class="toast" id="toast"></div>
+
+<script>
+// ══ DEFAULT DATA ══
+const DEFAULT = {
+  pwd: "admin123",
+  settings: { teamName:"Tim Kamu", year:"2025", desc:"Pantau perkembangan, XP, dan pencapaian seluruh anggota tim" },
+  members: [
+    {name:"Andi Pratama",role:"Product Manager",xp:2340,quests:8,badges:5,target:2800,skills:["Roadmapping","Stakeholder Mgmt","Agile","OKR"]},
+    {name:"Budi Santoso",role:"Backend Dev",xp:2100,quests:7,badges:4,target:2800,skills:["Node.js","PostgreSQL","System Design","Redis"]},
+    {name:"Citra Dewi",role:"Frontend Dev",xp:1850,quests:6,badges:4,target:2800,skills:["React","TypeScript","UI/UX","Tailwind"]},
+    {name:"Dion Rahmat",role:"Data Analyst",xp:1620,quests:5,badges:3,target:2000,skills:["SQL","Python","Tableau","dbt"]},
+    {name:"Eka Putri",role:"QA Engineer",xp:1400,quests:5,badges:3,target:2000,skills:["Cypress","Postman","Bug Reporting","Test Plan"]},
+    {name:"Fajar Nugroho",role:"DevOps",xp:1280,quests:4,badges:2,target:1500,skills:["Docker","CI/CD","Kubernetes","Monitoring"]},
+    {name:"Gita Sari",role:"UI/UX Designer",xp:1100,quests:3,badges:2,target:1500,skills:["Figma","Design System","User Research","Prototyping"]},
+  ],
+  quests: [
+    {name:"Selesaikan 3 task kritis",desc:"Tuntaskan 3 task berprioritas tinggi sebelum sprint berakhir",cat:"Pekerjaan",xp:150,diff:"Mudah",icon:"💼",done:false},
+    {name:"Dokumentasi fitur baru",desc:"Tulis dokumentasi teknis atau user guide untuk fitur baru",cat:"Pekerjaan",xp:200,diff:"Sedang",icon:"📄",done:false},
+    {name:"Zero bug sprint",desc:"Selesaikan sprint tanpa membuat bug baru",cat:"Pekerjaan",xp:400,diff:"Sulit",icon:"🐛",done:false},
+    {name:"Code review 5 PR",desc:"Berikan review berkualitas pada 5 pull request rekan tim",cat:"Kolaborasi",xp:180,diff:"Sedang",icon:"🔍",done:false},
+    {name:"Knowledge sharing session",desc:"Adakan atau ikuti sesi sharing ilmu bersama minimal 3 orang",cat:"Kolaborasi",xp:250,diff:"Sedang",icon:"🎤",done:false},
+    {name:"Bantu onboarding rekan",desc:"Bantu anggota tim belajar fitur atau tools baru",cat:"Kolaborasi",xp:200,diff:"Mudah",icon:"🤝",done:false},
+    {name:"1-on-1 dengan semua anggota",desc:"Adakan sesi 1-on-1 dengan seluruh anggota tim",cat:"Kolaborasi",xp:250,diff:"Sedang",icon:"💬",done:false},
+    {name:"Selesaikan 1 kursus online",desc:"Tuntaskan minimal 1 modul kursus dari platform belajar",cat:"Skill",xp:300,diff:"Sedang",icon:"📚",done:false},
+    {name:"Coba teknologi baru",desc:"Eksplorasi dan buat laporan tentang tool atau teknologi baru",cat:"Skill",xp:350,diff:"Sulit",icon:"🧪",done:false},
+    {name:"Ikuti webinar / konferensi",desc:"Hadiri event industri dan bagikan 3 insight ke tim",cat:"Skill",xp:280,diff:"Mudah",icon:"🖥️",done:false},
+    {name:"Refactor legacy code",desc:"Pilih 1 modul lama dan refactor agar lebih bersih",cat:"Skill",xp:320,diff:"Sulit",icon:"♻️",done:false},
+    {name:"Buat automation script",desc:"Buat script yang mengotomasi 1 proses manual tim",cat:"Skill",xp:380,diff:"Sulit",icon:"⚙️",done:false},
+  ],
+  badges: [
+    {icon:"⚡",name:"Sprint Master",desc:"Selesaikan sprint tanpa delay 3x berturut-turut",rarity:"Legendary",xp:500},
+    {icon:"📚",name:"Lifelong Learner",desc:"Selesaikan 5 kursus online",rarity:"Epic",xp:350},
+    {icon:"🤝",name:"Team Player",desc:"Bantu 3 rekan tim dalam seminggu",rarity:"Rare",xp:200},
+    {icon:"🔍",name:"Bug Hunter",desc:"Temukan dan laporkan 10 bug kritis",rarity:"Rare",xp:200},
+    {icon:"🚀",name:"First Ship",desc:"Deploy fitur pertama ke production",rarity:"Common",xp:100},
+    {icon:"🎤",name:"Speaker",desc:"Adakan knowledge sharing 3x",rarity:"Epic",xp:350},
+    {icon:"⭐",name:"Star Contributor",desc:"Raih 2000 XP dalam sebulan",rarity:"Legendary",xp:500},
+    {icon:"🛠️",name:"Craftsman",desc:"Refactor 5 modul legacy",rarity:"Epic",xp:300},
+    {icon:"🔥",name:"On Fire",desc:"Selesaikan quest 7 hari berturut-turut",rarity:"Rare",xp:250},
+    {icon:"💡",name:"Innovator",desc:"Propose ide yang diadopsi tim",rarity:"Legendary",xp:500},
+    {icon:"📊",name:"Data Driven",desc:"Buat 3 dashboard analytics",rarity:"Common",xp:100},
+    {icon:"🌟",name:"Mentor",desc:"Bantu onboarding 2 anggota baru",rarity:"Rare",xp:200},
+  ]
+};
+
+// ══ STATE ══
+function load(){
+  try{ return JSON.parse(localStorage.getItem('gf_data')) || JSON.parse(JSON.stringify(DEFAULT)); }
+  catch(e){ return JSON.parse(JSON.stringify(DEFAULT)); }
+}
+function save(d){ localStorage.setItem('gf_data', JSON.stringify(d)); }
+let D = load();
+
+// ══ HELPERS ══
+function ini(n){ return n.split(" ").map(w=>w[0]).join("").slice(0,2); }
+function lvOf(xp){ return xp>=2800?"🏅 Platinum":xp>=2000?"⭐ Gold":xp>=1500?"🥈 Silver":"🟫 Bronze"; }
+function lvCls(xp){ return xp>=2800?"lv-platinum":xp>=2000?"lv-gold":xp>=1500?"lv-silver":"lv-bronze"; }
+function catPill(c){ return c==="Pekerjaan"?"p-work":c==="Skill"?"p-skill":"p-collab"; }
+function catQi(c){ return c==="Pekerjaan"?"qi-work":c==="Skill"?"qi-skill":"qi-collab"; }
+function diffPill(d){ return d==="Mudah"?"p-easy":d==="Sedang"?"p-med":"p-hard"; }
+function fmtXP(n){ return n>=1000?(n/1000).toFixed(1).replace(".0","")+"k":String(n); }
+function avCls(i){ return "av-"+(i%7); }
+
+function toast(msg){
+  const t=document.getElementById('toast');
+  t.textContent=msg; t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'),2500);
+}
+
+// ══ PAGE SYSTEM ══
+function showPage(p){
+  document.querySelectorAll('.page').forEach(el=>el.classList.remove('active'));
+  document.getElementById('page-'+p).classList.add('active');
+  if(p==='public') renderAll();
+  if(p==='admin') renderAdmin();
+}
+
+// ══ AUTH ══
+function doLogin(){
+  const v = document.getElementById('pwd-input').value;
+  if(v === D.pwd){ document.getElementById('login-err').style.display='none'; showPage('admin'); }
+  else { document.getElementById('login-err').style.display='block'; }
+}
+function doLogout(){ showPage('public'); }
+
+// ══ PUBLIC RENDERS ══
+function renderAll(){
+  applySettings();
+  updateStats();
+  renderLB();
+  renderQuests();
+  renderTeam();
+  renderBadges();
+}
+
+function applySettings(){
+  const s = D.settings;
+  document.getElementById('pub-badge').textContent = (s.teamName||'Tim') + ' · ' + (s.year||'2025');
+  document.getElementById('pub-title').textContent = 'Sistem Gamifikasi ' + (s.teamName||'Tim');
+  document.getElementById('pub-desc').textContent = s.desc||'';
+  // settings inputs
+  const tn=document.getElementById('set-teamname');
+  const yr=document.getElementById('set-year');
+  const dc=document.getElementById('set-desc');
+  if(tn) tn.value=s.teamName||'';
+  if(yr) yr.value=s.year||'';
+  if(dc) dc.value=s.desc||'';
+}
+
+function updateStats(){
+  document.getElementById('s-members').textContent=D.members.length;
+  document.getElementById('s-xp').textContent=fmtXP(D.members.reduce((a,m)=>a+m.xp,0));
+  document.getElementById('s-quests').textContent=D.members.reduce((a,m)=>a+m.quests,0);
+  document.getElementById('s-badges').textContent=D.members.reduce((a,m)=>a+m.badges,0);
+}
+
+function renderLB(){
+  const sorted=[...D.members].map((m,i)=>({...m,_i:i})).sort((a,b)=>b.xp-a.xp);
+  const ranks=["🥇","🥈","🥉","4","5","6","7","8","9","10"];
+  document.getElementById('lb-list').innerHTML=sorted.map((m,i)=>`
+    <div class="lb-item">
+      <div class="lb-rank">${ranks[i]||i+1}</div>
+      <div class="lb-av ${avCls(m._i)}">${ini(m.name)}</div>
+      <div class="lb-info"><div class="lb-name">${m.name}</div><div class="lb-role">${m.role}</div></div>
+      <div style="text-align:right"><div class="lb-xp">${m.xp.toLocaleString()} XP</div><div class="lb-lv"><span class="lv-tag ${lvCls(m.xp)}">${lvOf(m.xp)}</span></div></div>
+    </div>`).join('');
+  document.getElementById('prog-list').innerHTML=sorted.map(m=>{
+    const pct=Math.min(Math.round(m.xp/m.target*100),100);
+    const left=Math.max(0,m.target-m.xp);
+    return `<div>
+      <div class="prog-label"><span style="font-weight:600">${m.name}</span><span>${m.xp.toLocaleString()} / ${m.target.toLocaleString()} XP — kurang <b style="color:var(--accent)">${left.toLocaleString()}</b></span></div>
+      <div class="prog-bg"><div class="prog-fill" style="width:${pct}%"></div></div>
+    </div>`;
+  }).join('');
+}
+
+let qFilter='all';
+function filterQ(c,btn){
+  qFilter=c;
+  document.querySelectorAll('#quest-filters .filter-btn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  renderQuests();
+}
+function toggleQ(i){ D.quests[i].done=!D.quests[i].done; save(D); renderQuests(); }
+function renderQuests(){
+  const list=qFilter==='all'?D.quests:D.quests.filter(q=>q.cat===qFilter);
+  document.getElementById('quest-list').innerHTML=list.map((q,ri)=>{
+    const i=D.quests.indexOf(q);
+    return `<div class="quest-item ${q.done?'done':''}">
+      <div class="q-icon ${catQi(q.cat)}">${q.icon||'📋'}</div>
+      <div style="flex:1">
+        <div class="q-name">${q.name}</div>
+        <div class="q-desc">${q.desc}</div>
+        <div class="pills">
+          <span class="pill p-xp">+${q.xp} XP</span>
+          <span class="pill ${catPill(q.cat)}">${q.cat}</span>
+          <span class="pill ${diffPill(q.diff)}">${q.diff}</span>
+        </div>
+      </div>
+      <div class="q-check ${q.done?'checked':''}" onclick="toggleQ(${i})">${q.done?'✓':''}</div>
+    </div>`;
+  }).join('');
+}
+
+let selMember=null;
+function selM(i){ selMember=selMember===i?null:i; renderTeam(); }
+function renderTeam(){
+  document.getElementById('team-grid').innerHTML=D.members.map((m,i)=>`
+    <div class="team-card ${selMember===i?'sel':''}" onclick="selM(${i})">
+      <div class="tc-top">
+        <div class="tc-av ${avCls(i)}">${ini(m.name)}</div>
+        <div><div class="tc-name">${m.name.split(' ')[0]}</div><div class="tc-role">${m.role}</div></div>
+      </div>
+      <div class="tc-xp">${m.xp.toLocaleString()}</div>
+      <div class="tc-xp-lbl">Total XP</div>
+      <div class="prog-bg" style="margin-bottom:10px"><div class="prog-fill" style="width:${Math.min(Math.round(m.xp/m.target*100),100)}%"></div></div>
+      <span class="lv-tag ${lvCls(m.xp)}">${lvOf(m.xp)}</span>
+    </div>`).join('');
+  const det=document.getElementById('member-detail');
+  if(selMember===null){det.style.display='none';return;}
+  const m=D.members[selMember];
+  const left=Math.max(0,m.target-m.xp);
+  det.style.display='block';
+  det.innerHTML=`
+    <div class="det-top">
+      <div class="det-av ${avCls(selMember)}">${ini(m.name)}</div>
+      <div><div class="det-name">${m.name}</div><div class="det-role">${m.role}</div><span class="lv-tag ${lvCls(m.xp)}">${lvOf(m.xp)}</span></div>
+    </div>
+    <div class="prog-label"><span>Progress ke level berikutnya</span><span>${m.xp.toLocaleString()} / ${m.target.toLocaleString()} XP</span></div>
+    <div class="prog-bg"><div class="prog-fill" style="width:${Math.min(Math.round(m.xp/m.target*100),100)}%"></div></div>
+    <div class="det-stats">
+      <div class="det-stat"><div class="det-snum" style="color:var(--accent)">${m.xp.toLocaleString()}</div><div class="det-slbl">Total XP</div></div>
+      <div class="det-stat"><div class="det-snum" style="color:var(--teal)">${m.quests}</div><div class="det-slbl">Quest Selesai</div></div>
+      <div class="det-stat"><div class="det-snum" style="color:var(--gold)">${left.toLocaleString()}</div><div class="det-slbl">XP Kurang</div></div>
+    </div>
+    <div class="skills-wrap">${(m.skills||[]).map(s=>`<span class="skill-tag">${s}</span>`).join('')}</div>`;
+}
+
+let bFilter='all';
+function filterB(r,btn){
+  bFilter=r;
+  btn.parentElement.querySelectorAll('.filter-btn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  renderBadges();
+}
+function renderBadges(){
+  const list=bFilter==='all'?D.badges:D.badges.filter(b=>b.rarity===bFilter);
+  document.getElementById('badge-grid').innerHTML=list.map(b=>`
+    <div class="badge-card">
+      <span class="badge-emoji">${b.icon}</span>
+      <div class="badge-name">${b.name}</div>
+      <div class="badge-desc">${b.desc}</div>
+      <span class="br-${b.rarity.toLowerCase()}">${b.rarity}</span>
+      <div class="badge-xp">+${b.xp} XP Bonus</div>
+    </div>`).join('');
+}
+
+function switchTab(t){
+  document.querySelectorAll('.tabs .tab').forEach((el,i)=>el.classList.toggle('active',['lb','quest','team','badge'][i]===t));
+  document.querySelectorAll('#page-public .section').forEach(el=>el.classList.toggle('active',el.id===t));
+}
+
+// ══ ADMIN RENDERS ══
+function renderAdmin(){
+  applySettings();
+  renderMembersTable();
+  renderQuestsTable();
+  renderBadgesTable();
+}
+
+function renderMembersTable(){
+  document.getElementById('members-table').innerHTML=`
+    <thead><tr>
+      <th>Anggota</th><th>XP</th><th>Quest</th><th>Badge</th><th>Level</th><th style="text-align:right">Aksi</th>
+    </tr></thead>
+    <tbody>${D.members.map((m,i)=>`
+      <tr>
+        <td><span class="inline-av ${avCls(i)}">${ini(m.name)}</span><b>${m.name}</b><br><small style="color:var(--text2)">${m.role}</small></td>
+        <td>${m.xp.toLocaleString()}</td>
+        <td>${m.quests}</td>
+        <td>${m.badges}</td>
+        <td><span class="lv-tag ${lvCls(m.xp)}" style="font-size:11px">${lvOf(m.xp)}</span></td>
+        <td style="text-align:right">
+          <button class="btn btn-ghost btn-sm" style="margin-right:6px" onclick="editMember(${i})">Edit</button>
+          <button class="btn btn-danger btn-sm" onclick="delMember(${i})">Hapus</button>
+        </td>
+      </tr>`).join('')}
+    </tbody>`;
+}
+
+function renderQuestsTable(){
+  document.getElementById('quests-table').innerHTML=`
+    <thead><tr>
+      <th>Quest</th><th>Kategori</th><th>XP</th><th>Tingkat</th><th style="text-align:right">Aksi</th>
+    </tr></thead>
+    <tbody>${D.quests.map((q,i)=>`
+      <tr>
+        <td><b>${q.icon||'📋'} ${q.name}</b><br><small style="color:var(--text2)">${q.desc.slice(0,60)}${q.desc.length>60?'...':''}</small></td>
+        <td><span class="pill ${catPill(q.cat)}" style="font-size:11px">${q.cat}</span></td>
+        <td>+${q.xp}</td>
+        <td><span class="pill ${diffPill(q.diff)}" style="font-size:11px">${q.diff}</span></td>
+        <td style="text-align:right">
+          <button class="btn btn-ghost btn-sm" style="margin-right:6px" onclick="editQuest(${i})">Edit</button>
+          <button class="btn btn-danger btn-sm" onclick="delQuest(${i})">Hapus</button>
+        </td>
+      </tr>`).join('')}
+    </tbody>`;
+}
+
+function renderBadgesTable(){
+  document.getElementById('badges-table').innerHTML=`
+    <thead><tr>
+      <th>Badge</th><th>Kelangkaan</th><th>XP Bonus</th><th style="text-align:right">Aksi</th>
+    </tr></thead>
+    <tbody>${D.badges.map((b,i)=>`
+      <tr>
+        <td><b>${b.icon} ${b.name}</b><br><small style="color:var(--text2)">${b.desc}</small></td>
+        <td><span class="br-${b.rarity.toLowerCase()}">${b.rarity}</span></td>
+        <td>+${b.xp}</td>
+        <td style="text-align:right">
+          <button class="btn btn-ghost btn-sm" style="margin-right:6px" onclick="editBadge(${i})">Edit</button>
+          <button class="btn btn-danger btn-sm" onclick="delBadge(${i})">Hapus</button>
+        </td>
+      </tr>`).join('')}
+    </tbody>`;
+}
+
+function switchAdminTab(t){
+  document.querySelectorAll('.admin-tab').forEach((el,i)=>el.classList.toggle('active',['at-members','at-quests','at-badges','at-settings'][i]===t));
+  document.querySelectorAll('.admin-section').forEach(el=>el.classList.toggle('active',el.id===t));
+}
+
+// ══ MODAL ══
+function openModal(type){ document.getElementById('modal-'+type).classList.add('open'); }
+function closeModal(type){ document.getElementById('modal-'+type).classList.remove('open'); }
+
+// ══ MEMBERS CRUD ══
+function editMember(i){
+  const m=D.members[i];
+  document.getElementById('modal-member-title').textContent='Edit Anggota';
+  document.getElementById('m-edit-idx').value=i;
+  document.getElementById('m-name').value=m.name;
+  document.getElementById('m-role').value=m.role;
+  document.getElementById('m-skills').value=(m.skills||[]).join(', ');
+  document.getElementById('m-xp').value=m.xp;
+  document.getElementById('m-quests').value=m.quests;
+  document.getElementById('m-badges').value=m.badges;
+  document.getElementById('m-target').value=m.target;
+  openModal('member');
+}
+function saveMember(){
+  const idx=parseInt(document.getElementById('m-edit-idx').value);
+  const obj={
+    name:document.getElementById('m-name').value.trim(),
+    role:document.getElementById('m-role').value.trim(),
+    skills:document.getElementById('m-skills').value.split(',').map(s=>s.trim()).filter(Boolean),
+    xp:parseInt(document.getElementById('m-xp').value)||0,
+    quests:parseInt(document.getElementById('m-quests').value)||0,
+    badges:parseInt(document.getElementById('m-badges').value)||0,
+    target:parseInt(document.getElementById('m-target').value)||2800,
+  };
+  if(!obj.name){toast('⚠️ Nama tidak boleh kosong');return;}
+  if(idx===-1) D.members.push(obj); else D.members[idx]=obj;
+  save(D); closeModal('member'); renderMembersTable(); toast('✅ Anggota tersimpan!');
+  document.getElementById('m-edit-idx').value=-1;
+  document.getElementById('modal-member-title').textContent='Tambah Anggota';
+}
+function delMember(i){
+  if(!confirm(`Hapus ${D.members[i].name}?`))return;
+  D.members.splice(i,1); save(D); renderMembersTable(); toast('🗑 Anggota dihapus');
+}
+
+// ══ QUESTS CRUD ══
+function editQuest(i){
+  const q=D.quests[i];
+  document.getElementById('modal-quest-title').textContent='Edit Quest';
+  document.getElementById('q-edit-idx').value=i;
+  document.getElementById('q-name').value=q.name;
+  document.getElementById('q-desc').value=q.desc;
+  document.getElementById('q-cat').value=q.cat;
+  document.getElementById('q-diff').value=q.diff;
+  document.getElementById('q-xp').value=q.xp;
+  document.getElementById('q-icon').value=q.icon||'📋';
+  openModal('quest');
+}
+function saveQuest(){
+  const idx=parseInt(document.getElementById('q-edit-idx').value);
+  const obj={
+    name:document.getElementById('q-name').value.trim(),
+    desc:document.getElementById('q-desc').value.trim(),
+    cat:document.getElementById('q-cat').value,
+    diff:document.getElementById('q-diff').value,
+    xp:parseInt(document.getElementById('q-xp').value)||100,
+    icon:document.getElementById('q-icon').value.trim()||'📋',
+    done:false,
+  };
+  if(!obj.name){toast('⚠️ Nama quest kosong');return;}
+  if(idx===-1) D.quests.push(obj); else D.quests[idx]={...D.quests[idx],...obj};
+  save(D); closeModal('quest'); renderQuestsTable(); toast('✅ Quest tersimpan!');
+  document.getElementById('q-edit-idx').value=-1;
+  document.getElementById('modal-quest-title').textContent='Tambah Quest';
+}
+function delQuest(i){
+  if(!confirm(`Hapus quest "${D.quests[i].name}"?`))return;
+  D.quests.splice(i,1); save(D); renderQuestsTable(); toast('🗑 Quest dihapus');
+}
+
+// ══ BADGES CRUD ══
+function editBadge(i){
+  const b=D.badges[i];
+  document.getElementById('modal-badge-title').textContent='Edit Badge';
+  document.getElementById('b-edit-idx').value=i;
+  document.getElementById('b-name').value=b.name;
+  document.getElementById('b-icon').value=b.icon;
+  document.getElementById('b-desc').value=b.desc;
+  document.getElementById('b-rarity').value=b.rarity;
+  document.getElementById('b-xp').value=b.xp;
+  openModal('badge');
+}
+function saveBadge(){
+  const idx=parseInt(document.getElementById('b-edit-idx').value);
+  const obj={
+    name:document.getElementById('b-name').value.trim(),
+    icon:document.getElementById('b-icon').value.trim()||'⭐',
+    desc:document.getElementById('b-desc').value.trim(),
+    rarity:document.getElementById('b-rarity').value,
+    xp:parseInt(document.getElementById('b-xp').value)||100,
+  };
+  if(!obj.name){toast('⚠️ Nama badge kosong');return;}
+  if(idx===-1) D.badges.push(obj); else D.badges[idx]=obj;
+  save(D); closeModal('badge'); renderBadgesTable(); toast('✅ Badge tersimpan!');
+  document.getElementById('b-edit-idx').value=-1;
+  document.getElementById('modal-badge-title').textContent='Tambah Badge';
+}
+function delBadge(i){
+  if(!confirm(`Hapus badge "${D.badges[i].name}"?`))return;
+  D.badges.splice(i,1); save(D); renderBadgesTable(); toast('🗑 Badge dihapus');
+}
+
+// ══ SETTINGS ══
+function saveSettings(){
+  D.settings.teamName=document.getElementById('set-teamname').value.trim()||'Tim Kamu';
+  D.settings.year=document.getElementById('set-year').value.trim()||'2025';
+  D.settings.desc=document.getElementById('set-desc').value.trim();
+  save(D); applySettings(); toast('✅ Pengaturan disimpan!');
+}
+function changePwd(){
+  const np=document.getElementById('new-pwd').value;
+  const cp=document.getElementById('confirm-pwd').value;
+  if(!np){toast('⚠️ Password baru kosong');return;}
+  if(np!==cp){toast('⚠️ Password tidak cocok');return;}
+  D.pwd=np; save(D);
+  document.getElementById('new-pwd').value='';
+  document.getElementById('confirm-pwd').value='';
+  toast('✅ Password berhasil diganti!');
+}
+
+// ══ IMPORT/EXPORT ══
+function exportData(){
+  const blob=new Blob([JSON.stringify(D,null,2)],{type:'application/json'});
+  const a=document.createElement('a'); a.href=URL.createObjectURL(blob);
+  a.download='gamifikasi-tim-backup.json'; a.click(); toast('⬇ Data diekspor!');
+}
+function importData(e){
+  const f=e.target.files[0]; if(!f)return;
+  const r=new FileReader();
+  r.onload=ev=>{ try{ D=JSON.parse(ev.target.result); save(D); renderAdmin(); toast('✅ Data diimport!'); }catch(err){ toast('❌ Format file tidak valid'); } };
+  r.readAsText(f);
+}
+function resetData(){
+  if(!confirm('Reset semua data ke default? Perubahan tidak bisa dikembalikan.'))return;
+  D=JSON.parse(JSON.stringify(DEFAULT)); save(D); renderAdmin(); toast('🔄 Data direset ke default');
+}
+
+// ══ CLOSE MODAL ON OVERLAY CLICK ══
+document.querySelectorAll('.modal-overlay').forEach(el=>{
+  el.addEventListener('click',e=>{ if(e.target===el) el.classList.remove('open'); });
+});
+
+// ══ INIT ══
+renderAll();
+</script>
+</body>
+</html>
